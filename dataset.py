@@ -1,16 +1,15 @@
 import torch
-import torchtext
-from torchtext.data.utils import get_tokenizer
-from torchtext.vocab import build_vocab_from_iterator
 from sklearn.preprocessing import LabelEncoder
 from torch.nn.utils.rnn import pad_sequence
-from torchtext.vocab import Vocab
 from nltk.corpus import reuters
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 import nltk
+from nltk.lm import Vocabulary
 
-torchtext.disable_torchtext_deprecation_warning()
+# import torchtext
+# from torchtext.data.utils import get_tokenizer
+# from torchtext.vocab import build_vocab_from_iterator
 
 
 class ReutersDataset(Dataset):
@@ -33,6 +32,7 @@ class ReutersDataset(Dataset):
 def load_dataset():
     nltk.download("reuters")
     nltk.download("stopwords")
+    nltk.download("punkt")
 
     # Load documents and their categories
     documents = reuters.fileids()
@@ -41,26 +41,19 @@ def load_dataset():
     # Load document content
     data = [reuters.raw(fileid) for fileid in documents]
 
-    # Create a DataFrame
-    df = pd.DataFrame(
-        {
-            "text": _remove_stopwords(data),
-            "category": _process_labels(categories),
-        }
-    )
+    text = _remove_stopwords(data)
+    tokens = [sentence for sentence in text]
 
-    # Tokenize and build vocabulary
-    tokenizer = get_tokenizer("basic_english")
-    tokens = [tokenizer(text) for text in df["text"]]
-
-    vocab = build_vocab_from_iterator(tokens, specials=["<unk>", "<pad>"])
-    vocab.set_default_index(vocab["<unk>"])
+    vocab = Vocabulary(tokens)
 
     label_encoder = LabelEncoder()
+    labels = label_encoder.fit_transform(_process_labels(categories))
+
+    tokens = [nltk.word_tokenize(sentence) for sentence in text]
     encoded_df = pd.DataFrame(
         {
-            "text": [vocab(token) for token in tokens],
-            "category": label_encoder.fit_transform(df["category"]),
+            "text": [vocab[token] for token in tokens],
+            "category": label_encoder.fit_transform(labels),
         }
     )
 
@@ -70,7 +63,7 @@ def load_dataset():
 def to_dataloader(
     text: pd.Series,
     labels: pd.Series,
-    vocab: Vocab,
+    vocab: Vocabulary,
     shuffle: bool = True,
 ) -> DataLoader:
     dataset = ReutersDataset(text.tolist(), labels.tolist())
@@ -82,10 +75,10 @@ def to_dataloader(
     )
 
 
-def _collate_fn(batch: list[tuple[list[int], list[int]]], vocab: Vocab):
+def _collate_fn(batch: list[tuple[list[int], list[int]]], vocab: Vocabulary):
     texts, labels = zip(*batch)
 
-    texts_padded = pad_sequence(texts, batch_first=True, padding_value=vocab["<pad>"])
+    texts_padded = pad_sequence(texts, batch_first=True, padding_value=-1)
     labels = torch.tensor(labels, dtype=torch.long)
 
     return texts_padded, labels
@@ -97,7 +90,10 @@ def _remove_stopwords(text: list[str]) -> pd.Series:
         pd.Series(text)
         .str.lower()
         .replace("[^\w\s]", "")
-        .apply(lambda x: " ".join([word for word in x.split() if word not in stop]))
+        .apply(nltk.word_tokenize)
+        .apply(
+            lambda sentence: " ".join([word for word in sentence if word not in stop])
+        )
     )
 
 
