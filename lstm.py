@@ -20,15 +20,16 @@ class LSTM(nn.Module):
             hidden_size,
             num_layers=num_layers,
             batch_first=True,
+            bidirectional=False,
             dropout=dropout,
         )
-        self.fc = nn.Linear(hidden_size * 2, output_size)
         self.dropout = nn.Dropout(dropout)
+        self.fc = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
         embedded = self.embedding(x)
         _, (hidden, _) = self.rnn(embedded)
-        hidden = torch.cat((hidden[-2], hidden[-1]), dim=1)
+        hidden = hidden[-1]
         out = self.dropout(hidden)
         out = self.fc(out)
         return out
