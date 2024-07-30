@@ -23,8 +23,8 @@ class BidirectionalLSTM(nn.Module):
             batch_first=True,
             dropout=dropout,
         )
-        self.fc = nn.Linear(hidden_size * 2, output_size)
         self.dropout = nn.Dropout(dropout)
+        self.fc = nn.Linear(hidden_size * 2, output_size)
 
     def forward(self, x):
         embedded = self.embedding(x)
