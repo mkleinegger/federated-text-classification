@@ -11,6 +11,7 @@ Aftward, select within `notebook.ipynb` the python environment `federated-learni
 
 ## Expirments
 We ran the expirements on a M1 Macbook Pro with 16GB of RAM. We used 100 epochs to train the state-of-the-art baseline, and the model we want to federate. 
+All the necessary code can be found within `notebook.ipynb`. The results are saved under `./results` and the plots are generated with `analysis.ipynb`.
 
 ### Config
 You can set all parameters of the model, within the first cell of the jupyter notebook. The default values were used to conduct the experiments
