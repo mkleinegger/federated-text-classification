@@ -3,5 +3,6 @@ scikit-learn
 pandas 
 nltk 
 matplotlib 
+ray
 flwr 
 datasets
