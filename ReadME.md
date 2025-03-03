@@ -1,5 +1,6 @@
 # Federated Learning for Text classification
-This repository contains all the necessary code, which was used to perform the analysis
+This repository contains all the necessary code, which was used to perform the analysis. A report can be found under https://mkleinegger.github.io/federated-text-classification/report.pdf.
+
 
 ## Setup
 Run the following commands to get an ready to go environment
